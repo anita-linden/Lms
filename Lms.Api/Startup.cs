@@ -14,6 +14,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Lms.Data.Data;
+using Lms.Core.Repositories;
+using Lms.Data.Repositories;
+using AutoMapper;
 
 namespace Lms.Api
 {
@@ -29,7 +32,7 @@ namespace Lms.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
+            services.AddAutoMapper(typeof(MapperProfile));
             services.AddControllers(opt => opt.ReturnHttpNotAcceptable = true)
                 .AddNewtonsoftJson()
                 .SetCompatibilityVersion(CompatibilityVersion.Latest)
@@ -41,6 +44,7 @@ namespace Lms.Api
 
             services.AddDbContext<ApplicationDbContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("ApplicationDbContext")));
+            services.AddScoped<IUoW, UoW>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

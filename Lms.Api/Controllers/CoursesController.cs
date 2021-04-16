@@ -7,6 +7,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Lms.Data.Data;
 using Lms.Core.Entities;
+using Lms.Core.Repositories;
+using AutoMapper;
+using Lms.Core.Dto;
+using Microsoft.AspNetCore.JsonPatch;
 
 namespace Lms.Api.Controllers
 {
@@ -14,32 +18,35 @@ namespace Lms.Api.Controllers
     [ApiController]
     public class CoursesController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IUoW _uow;
+        private readonly IMapper _mapper;
 
-        public CoursesController(ApplicationDbContext context)
+        public CoursesController(IUoW uow, IMapper mapper)
         {
-            _context = context;
+            _uow = uow;
+            _mapper = mapper;
         }
 
         // GET: api/Courses
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Course>>> GetCourse()
+        public async Task<ActionResult<IEnumerable<Course>>> GetCourse(bool getModules = true)
         {
-            return await _context.Course.ToListAsync();
+            return Ok(_mapper.Map<CourseDto>(await _uow.CourseRepository.GetAllCourses(getModules)));
         }
 
         // GET: api/Courses/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Course>> GetCourse(int id)
         {
-            var course = await _context.Course.FindAsync(id);
+            var courseDto = _mapper.Map<CourseDto>(await _uow.CourseRepository.GetCourse(id));
 
-            if (course == null)
+            if (courseDto == null)
             {
+                //todo put the logic here so you can return notfound
                 return NotFound();
             }
 
-            return course;
+            return Ok(courseDto);
         }
 
         // PUT: api/Courses/5
@@ -52,11 +59,11 @@ namespace Lms.Api.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(course).State = EntityState.Modified;
+            _uow.ModifyState<Course>(course);
 
             try
             {
-                await _context.SaveChangesAsync();
+                await _uow.CompleteAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -78,8 +85,11 @@ namespace Lms.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Course>> PostCourse(Course course)
         {
-            _context.Course.Add(course);
-            await _context.SaveChangesAsync();
+            await _uow.CourseRepository.AddAsync(course);
+            if(await _uow.CourseRepository.SaveAsync() == false)
+            {
+                return StatusCode(500);
+            }
 
             return CreatedAtAction("GetCourse", new { id = course.Id }, course);
         }
@@ -88,21 +98,49 @@ namespace Lms.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCourse(int id)
         {
-            var course = await _context.Course.FindAsync(id);
+            var course = await _uow.CourseRepository.GetCourse(id);
             if (course == null)
             {
                 return NotFound();
             }
 
-            _context.Course.Remove(course);
-            await _context.SaveChangesAsync();
+            _uow.CourseRepository.Remove(course);
+
+            if (await _uow.CourseRepository.SaveAsync() == false)
+            {
+                return StatusCode(500);
+            }
 
             return NoContent();
         }
 
+        [HttpPatch("{courseId}")]
+        public async Task<ActionResult<CourseDto>> PatchCourse(int courseId, JsonPatchDocument<CourseDto> patchDocument)
+        {
+            if (CourseExists(courseId)) return NotFound();
+
+            var course = _uow.CourseRepository.GetCourse(courseId).Result;
+            var model = _mapper.Map<CourseDto>(course);
+
+            patchDocument.ApplyTo(model, ModelState);
+
+            if (model.Title != course.Title)
+            {
+                return BadRequest();
+            }
+
+            _mapper.Map(model, course);
+
+            if (await _uow.CourseRepository.SaveAsync())
+            {
+                return Ok(_mapper.Map<CourseDto>(course));
+            }
+            else return StatusCode(500);
+        }
+
         private bool CourseExists(int id)
         {
-            return _context.Course.Any(e => e.Id == id);
+            return (_uow.CourseRepository.GetCourse(id) is not null);
         }
     }
 }

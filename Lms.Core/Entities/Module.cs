@@ -10,6 +10,8 @@ namespace Lms.Core.Entities
     {
         [Key]
         public int Id { get; set; }
+        [Required]
+        [MaxLength(30)]
         public string Title { get; set; }
         public DateTime StartDate { get; set; }
 

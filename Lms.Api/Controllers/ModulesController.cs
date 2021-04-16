@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Lms.Data.Data;
 using Lms.Core.Entities;
+using Lms.Core.Repositories;
+using AutoMapper;
+using Lms.Core.Dto;
 
 namespace Lms.Api.Controllers
 {
@@ -14,32 +17,36 @@ namespace Lms.Api.Controllers
     [ApiController]
     public class ModulesController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IUoW _uow;
+        private readonly IMapper _mapper;
 
-        public ModulesController(ApplicationDbContext context)
+        public ModulesController(IUoW uow, IMapper mapper)
         {
-            _context = context;
+            _uow = uow;
+            _mapper = mapper;
         }
 
         // GET: api/Modules
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Module>>> GetModule()
         {
-            return await _context.Module.ToListAsync();
+            var modulesDto = _mapper.Map<ModuleDto>(await _uow.ModuleRepository.GetAllModules());
+
+            return Ok(modulesDto);
         }
 
         // GET: api/Modules/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Module>> GetModule(int id)
         {
-            var @module = await _context.Module.FindAsync(id);
-
-            if (@module == null)
+            var @moduleDto = _mapper.Map<ModuleDto>(await _uow.ModuleRepository.GetModule(id));
+            
+            if (@moduleDto == null)
             {
                 return NotFound();
             }
 
-            return @module;
+            return Ok(moduleDto);
         }
 
         // PUT: api/Modules/5
@@ -52,11 +59,11 @@ namespace Lms.Api.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(@module).State = EntityState.Modified;
+            _uow.ModifyState<Module>(@module);
 
             try
             {
-                await _context.SaveChangesAsync();
+                await _uow.CompleteAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -78,8 +85,12 @@ namespace Lms.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Module>> PostModule(Module @module)
         {
-            _context.Module.Add(@module);
-            await _context.SaveChangesAsync();
+            await _uow.ModuleRepository.AddAsync(@module);
+            
+            if(await _uow.ModuleRepository.SaveAsync() == false)
+            {
+                return StatusCode(500);
+            }
 
             return CreatedAtAction("GetModule", new { id = @module.Id }, @module);
         }
@@ -88,21 +99,24 @@ namespace Lms.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteModule(int id)
         {
-            var @module = await _context.Module.FindAsync(id);
+            var @module = await _uow.ModuleRepository.GetModule(id);
             if (@module == null)
             {
                 return NotFound();
             }
 
-            _context.Module.Remove(@module);
-            await _context.SaveChangesAsync();
+            _uow.ModuleRepository.Remove(@module);
+            if(await _uow.ModuleRepository.SaveAsync() == false)
+            {
+                return StatusCode(500);
+            }
 
             return NoContent();
         }
 
         private bool ModuleExists(int id)
         {
-            return _context.Module.Any(e => e.Id == id);
+            return (_uow.ModuleRepository.GetModule(id) is not null);
         }
     }
 }
