@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lms.Api", "Lms.Api\Lms.Api.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lms.Core", "Lms.Core\Lms.Core.csproj", "{DEFA7D5D-9C9E-4CDC-986D-0D2BA57C1261}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lms.Data", "Lms.Data\Lms.Data.csproj", "{22671D8C-EF5C-453D-BEAD-B37E0CF2DBD0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lms.Data", "Lms.Data\Lms.Data.csproj", "{22671D8C-EF5C-453D-BEAD-B37E0CF2DBD0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lms.Test", "Lms.Test\Lms.Test.csproj", "{7D76327A-0BA8-46DC-87A1-257DB0C47820}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,6 +33,10 @@ Global
 		{22671D8C-EF5C-453D-BEAD-B37E0CF2DBD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{22671D8C-EF5C-453D-BEAD-B37E0CF2DBD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{22671D8C-EF5C-453D-BEAD-B37E0CF2DBD0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D76327A-0BA8-46DC-87A1-257DB0C47820}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D76327A-0BA8-46DC-87A1-257DB0C47820}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D76327A-0BA8-46DC-87A1-257DB0C47820}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D76327A-0BA8-46DC-87A1-257DB0C47820}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

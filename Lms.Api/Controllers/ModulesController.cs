@@ -30,7 +30,8 @@ namespace Lms.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Module>>> GetModule()
         {
-            var modulesDto = _mapper.Map<ModuleDto>(await _uow.ModuleRepository.GetAllModules());
+            var modules = await _uow.ModuleRepository.GetAllModules();
+            var modulesDto = _mapper.Map<CourseDto[]>(modules);
 
             return Ok(modulesDto);
         }
